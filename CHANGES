@@ -17,6 +17,10 @@ Not yet released.
 
 - #2: adds basic :http:method:`get` access to one level of relationship depth
   for models.
+- #60: added the ``hide_endpoints`` keyword argument to
+  :meth:`APIManager.create_api_blueprint` to hide disallowed HTTP methods
+  behind a :http:statuscode:`404` response instead of a :http:statuscode:`405`
+  response.
 - #113: interpret empty strings for date fields as ``None`` objects.
 - #128: allow disjunctions when filtering search queries.
 - #130: documentation and examples now more clearly show search examples.

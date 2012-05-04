@@ -12,6 +12,7 @@
 
 """
 
+from flask import abort
 from flask import Blueprint
 
 from .views import API
@@ -182,7 +183,9 @@ class APIManager(object):
                              validation_exceptions=None, results_per_page=10,
                              max_results_per_page=100,
                              post_form_preprocessor=None,
-                             preprocessors=None, postprocessors=None):
+                             preprocessors=None, postprocessors=None,
+                             hide_disallowed_endpoints=False,
+                             hide_unauthenticated_endpoints=False):
         """Creates an returns a ReSTful API interface as a blueprint, but does
         not register it on any :class:`flask.Flask` application.
 
@@ -310,12 +313,27 @@ class APIManager(object):
         other code. For more information on preprocessors and postprocessors,
         see :ref:`processors`.
 
+        If `hide_disallowed_endpoints` is ``True``, requests to disallowed
+        methods (that is, methods not specified in `methods`), which would
+        normally yield a :http:statuscode:`405` response, will yield a
+        :http:statuscode:`404` response instead. If
+        `hide_unauthenticated_endpoints` is ``True``, requests to endpoints for
+        which the user has not authenticated (as specified in the
+        `authentication_required_for` and `authentication_function` arguments)
+        will also be masked by :http:statuscode:`404` instead of
+        :http:statuscode:`403`. These options may be used as a simple form of
+        "security through obscurity", by (slightly) hindering users from
+        discovering where an endpoint exists.
+
         .. versionchanged:: 0.10.0
            Removed `authentication_required_for` and `authentication_function`
            keyword arguments.
 
            Use the `preprocesors` and `postprocessors` keyword arguments
            instead. For more information, see :ref:`authentication`.
+
+           Added the `hide_disallowed_endpoints` and
+           `hide_unauthenticated_endpoints` keyword argument.
 
         .. versionadded:: 0.9.2
            Added the `preprocessors` and `postprocessors` keyword arguments.
@@ -409,6 +427,14 @@ class APIManager(object):
             eval_endpoint = '/eval' + collection_endpoint
             blueprint.add_url_rule(eval_endpoint, methods=['GET'],
                                    view_func=eval_api_view)
+        if hide_disallowed_endpoints:
+            @blueprint.errorhandler(405)
+            def return_404(error):
+                abort(404)
+        if hide_unauthenticated_endpoints:
+            @blueprint.errorhandler(403)
+            def return_404(error):
+                abort(404)
         return blueprint
 
     def create_api(self, *args, **kw):
