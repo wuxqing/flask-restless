@@ -335,10 +335,13 @@ def to_dict(instance, deep=None, exclude=None, include=None,
     # default. Convert datetime objects to ISO 8601 format, convert UUID
     # objects to hexadecimal strings, etc.
     for key, value in result.items():
+        import sqlalchemy_utils
         if isinstance(value, (datetime.date, datetime.time)):
             result[key] = value.isoformat()
         elif isinstance(value, uuid.UUID):
             result[key] = str(value)
+        elif isinstance(value, sqlalchemy_utils.types.choice.Choice):
+            result[key] = value.code
         elif key not in column_attrs and is_mapped_class(type(value)):
             result[key] = to_dict(value)
     # recursively call _to_dict on each of the `deep` relations
